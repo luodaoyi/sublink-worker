@@ -425,7 +425,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                 if (!cidr) return;
                 const normalized = typeof cidr === 'string' ? cidr.trim() : cidr;
                 if (!normalized) return;
-                ruleResults.push(`SOURCE-IP-CIDR,${normalized},${t('outboundNames.'+ rule.outbound)},no-resolve`);
+                ruleResults.push(`SRC-IP-CIDR,${normalized},${t('outboundNames.'+ rule.outbound)},no-resolve`);
             });
         });
 
