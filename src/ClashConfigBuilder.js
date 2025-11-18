@@ -420,6 +420,15 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
             ...ip_rule_providers
         };
 
+        rules.filter(rule => Array.isArray(rule.src_ip_cidr) && rule.src_ip_cidr.length > 0).map(rule => {
+            rule.src_ip_cidr.forEach(cidr => {
+                if (!cidr) return;
+                const normalized = typeof cidr === 'string' ? cidr.trim() : cidr;
+                if (!normalized) return;
+                ruleResults.push(`SOURCE-IP-CIDR,${normalized},${t('outboundNames.'+ rule.outbound)},no-resolve`);
+            });
+        });
+
         rules.filter(rule => !!rule.domain_suffix || !!rule.domain_keyword).map(rule => {
             rule.domain_suffix.forEach(suffix => {
                 ruleResults.push(`DOMAIN-SUFFIX,${suffix},${t('outboundNames.'+ rule.outbound)}`);
@@ -441,9 +450,12 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
             });
         });
 
-        rules.filter(rule => !!rule.ip_cidr).map(rule => {
+        rules.filter(rule => Array.isArray(rule.ip_cidr) && rule.ip_cidr.length > 0).map(rule => {
             rule.ip_cidr.forEach(cidr => {
-                ruleResults.push(`IP-CIDR,${cidr},${t('outboundNames.'+ rule.outbound)},no-resolve`);
+                if (!cidr) return;
+                const normalized = typeof cidr === 'string' ? cidr.trim() : cidr;
+                if (!normalized) return;
+                ruleResults.push(`IP-CIDR,${normalized},${t('outboundNames.'+ rule.outbound)},no-resolve`);
             });
         });
 
