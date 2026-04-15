@@ -268,6 +268,7 @@ export const CustomRules = (props) => {
                 if (this.mode === 'form') {
                   this.jsonContent = JSON.stringify(value, null, 2);
                 }
+                this.dispatchRulesUpdated();
               });
 
               // Watch for changes in JSON content to update rules
@@ -295,8 +296,13 @@ export const CustomRules = (props) => {
                   this.rules = event.detail.rules;
                   this.jsonContent = JSON.stringify(event.detail.rules, null, 2);
                   this.mode = 'json'; // Switch to JSON mode to show imported rules
+                  this.dispatchRulesUpdated();
                 }
               });
+            },
+
+            dispatchRulesUpdated() {
+              this.$dispatch('custom-rules-updated', { rules: this.rules });
             },
             
             addRule() {

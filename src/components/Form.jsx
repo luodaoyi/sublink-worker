@@ -5,6 +5,7 @@ import { CustomRules } from './CustomRules.jsx';
 import { TextareaWithActions } from './TextareaWithActions.jsx';
 import { ValidatedTextarea } from './ValidatedTextarea.jsx';
 import { formLogicFn } from './formLogic.js';
+import { getRuleDisplayMap } from './ruleDisplay.js';
 
 const LINK_FIELDS = [
   { key: 'xray', labelKey: 'xrayLink' },
@@ -15,6 +16,7 @@ const LINK_FIELDS = [
 
 export const Form = (props) => {
   const { t, lang } = props;
+  const ruleDisplayMap = getRuleDisplayMap(t);
 
   const translations = {
     processing: t('processing'),
@@ -40,6 +42,8 @@ export const Form = (props) => {
   const scriptContent = `
     window.APP_TRANSLATIONS = ${JSON.stringify(translations)};
     window.PREDEFINED_RULE_SETS = ${JSON.stringify(PREDEFINED_RULE_SETS)};
+    window.RULE_DISPLAY_MAP = ${JSON.stringify(ruleDisplayMap)};
+    window.CUSTOM_RULE_LABEL = ${JSON.stringify(t('customRule'))};
     window.APP_LANG = ${JSON.stringify(lang || 'zh-CN')};
     if (typeof __name === 'undefined') { var __name = function(fn) { return fn; }; }
     (${formLogicFn.toString()})();
@@ -140,52 +144,62 @@ export const Form = (props) => {
 
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
     {UNIFIED_RULES.map((rule) => (
-      <label class="flex items-center p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors group">
+      <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors group">
         <input
           type="checkbox"
           value={rule.name}
           x-model="selectedRules" 
-                    x-on:change="selectedPredefinedRule = 'custom'"
-        class="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
-                  />
-        <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-          {t(`outboundNames.${rule.name}`)}
+          x-on:change="selectedPredefinedRule = 'custom'"
+          class="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
+        />
+        <span class="w-9 h-9 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0">
+          <i class={ruleDisplayMap[rule.name]?.iconClass || 'fas fa-shuffle'}></i>
+        </span>
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors truncate">
+          {ruleDisplayMap[rule.name]?.label || t(`outboundNames.${rule.name}`)}
         </span>
       </label>
     ))}
-  </div>
-
-  <div x-show="selectedRules.length > 0" class="mt-6 space-y-3">
-    <div class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-      <i class="fas fa-arrow-down-wide-short text-gray-400"></i>
-      <span>{t('priorityOrder')}</span>
-    </div>
-    <div class="space-y-2">
-      <template x-for="(ruleName, index) in selectedRules" x-bind:key="ruleName">
-        <div
-          draggable="true"
-          x-on:dragstart="startSelectedRuleDrag(index)"
-          x-on:dragend="clearSelectedRuleDrag()"
-          class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30 cursor-move"
-          {...{
-            'x-on:dragover.prevent': '',
-            'x-on:drop.prevent': 'handleSelectedRuleDrop(index)'
-          }}
-        >
-          <div class="flex items-center gap-3 min-w-0">
-            <span class="w-6 h-6 rounded bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs font-semibold" x-text="index + 1"></span>
-            <i class="fas fa-grip-vertical text-gray-400"></i>
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate" x-text="window.APP_TRANSLATIONS?.outboundNames?.[ruleName] || ruleName"></span>
-          </div>
-        </div>
-      </template>
-    </div>
   </div>
 
           </div>
 
   {/* Custom Rules Component */ }
   <CustomRules t={t} />
+
+  <div x-show="getPriorityPreviewItems().length > 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4">
+    <div class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+      <i class="fas fa-arrow-down-wide-short text-gray-400"></i>
+      <span>{t('priorityOrder')}</span>
+    </div>
+
+    <div class="space-y-2">
+      <template x-for="(rule, index) in getPriorityPreviewItems()" x-bind:key="`${rule.type}-${rule.name || 'unnamed'}-${index}`">
+        <div
+          x-bind:draggable="rule.type === 'predefined'"
+          x-on:dragstart="rule.type === 'predefined' ? startSelectedRuleDrag(rule.selectedIndex) : null"
+          x-on:dragend="clearSelectedRuleDrag()"
+          class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30"
+          x-bind:class="rule.type === 'predefined' ? 'cursor-move' : 'cursor-default'"
+          {...{
+            'x-on:dragover.prevent': '',
+            'x-on:drop.prevent': 'rule.type === \'predefined\' ? handleSelectedRuleDrop(rule.selectedIndex) : null'
+          }}
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="w-6 h-6 rounded bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs font-semibold" x-text="index + 1"></span>
+            <span class="w-9 h-9 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0">
+              <i x-bind:class="rule.iconClass"></i>
+            </span>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate" x-text="rule.label"></span>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+            <i x-bind:class="rule.type === 'predefined' ? 'fas fa-grip-vertical' : 'fas fa-thumbtack'"></i>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
 
     {/* General Options */ }
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">

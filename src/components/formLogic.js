@@ -83,6 +83,7 @@ export const formLogicFn = (t) => {
             selectedRules: [],
             selectedPredefinedRule: 'balanced',
             draggedSelectedRuleIndex: null,
+            customPriorityRules: [],
             subconverterCopied: false,
             groupByCountry: false,
             includeAutoSelect: true,
@@ -155,6 +156,10 @@ export const formLogicFn = (t) => {
 
                 // Initialize rules
                 this.applyPredefinedRule();
+                this.syncCustomPriorityRules();
+                window.addEventListener('custom-rules-updated', (event) => {
+                    this.customPriorityRules = Array.isArray(event?.detail?.rules) ? event.detail.rules : [];
+                });
 
                 // Watchers to save state
                 this.$watch('input', val => {
@@ -219,6 +224,39 @@ export const formLogicFn = (t) => {
 
             clearSelectedRuleDrag() {
                 this.draggedSelectedRuleIndex = null;
+            },
+
+            syncCustomPriorityRules() {
+                try {
+                    const customRulesInput = document.querySelector('input[name="customRules"]');
+                    const customRules = customRulesInput && customRulesInput.value ? JSON.parse(customRulesInput.value) : [];
+                    this.customPriorityRules = Array.isArray(customRules) ? customRules : [];
+                } catch {
+                    this.customPriorityRules = [];
+                }
+            },
+
+            getPriorityPreviewItems() {
+                const customRuleLabel = window.CUSTOM_RULE_LABEL || 'Custom Rule';
+                const ruleDisplayMap = window.RULE_DISPLAY_MAP || {};
+                const customItems = (Array.isArray(this.customPriorityRules) ? this.customPriorityRules : []).map((rule, index) => {
+                    const trimmedName = typeof rule?.name === 'string' ? rule.name.trim() : '';
+                    return {
+                        type: 'custom',
+                        name: trimmedName,
+                        label: trimmedName || `${customRuleLabel} ${index + 1}`,
+                        iconClass: 'fas fa-wand-magic-sparkles'
+                    };
+                });
+                const selectedItems = (Array.isArray(this.selectedRules) ? this.selectedRules : []).map((ruleName, selectedIndex) => ({
+                    type: 'predefined',
+                    name: ruleName,
+                    label: ruleDisplayMap[ruleName]?.label || ruleName,
+                    iconClass: ruleDisplayMap[ruleName]?.iconClass || 'fas fa-shuffle',
+                    selectedIndex
+                }));
+
+                return [...customItems, ...selectedItems];
             },
 
             getSubconverterUrl() {
