@@ -58,8 +58,13 @@ export const CustomRules = (props) => {
           x-data="{ show: false }"
           x-init="$nextTick(() => show = true)"
           x-show="show"
-          class="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4 border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:border-primary-200 dark:hover:border-primary-900/50"
+          draggable="true"
+          x-on:dragstart="startRuleDrag(index)"
+          x-on:dragend="clearRuleDrag()"
+          class="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4 border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:border-primary-200 dark:hover:border-primary-900/50 cursor-move"
           {...{
+            'x-on:dragover.prevent': '',
+            'x-on:drop.prevent': 'handleRuleDrop(index)',
             'x-transition:enter': 'transition ease-out duration-300',
             'x-transition:enter-start': 'opacity-0 -translate-y-2 scale-95',
             'x-transition:enter-end': 'opacity-100 translate-y-0 scale-100',
@@ -72,6 +77,7 @@ export const CustomRules = (props) => {
             <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="font-medium text-gray-900 dark:text-white flex items-center gap-2">
                     <span class="w-6 h-6 rounded bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs" x-text="index + 1"></span>
+                    <i class="fas fa-grip-vertical text-gray-400"></i>
                     {t('customRule')}
                 </h3>
                 <button
@@ -254,6 +260,7 @@ export const CustomRules = (props) => {
             jsonContent: '[]',
             jsonError: null,
             jsonValid: false,
+            draggedRuleIndex: null,
             
             init() {
               // Watch for changes in rules to update JSON content
@@ -309,6 +316,31 @@ export const CustomRules = (props) => {
             
             removeRule(index) {
               this.rules.splice(index, 1);
+            },
+
+            moveRule(fromIndex, toIndex) {
+              if (fromIndex === toIndex) return;
+              if (fromIndex < 0 || toIndex < 0) return;
+              if (fromIndex >= this.rules.length || toIndex >= this.rules.length) return;
+
+              const reorderedRules = [...this.rules];
+              const [movedRule] = reorderedRules.splice(fromIndex, 1);
+              reorderedRules.splice(toIndex, 0, movedRule);
+              this.rules = reorderedRules;
+            },
+
+            startRuleDrag(index) {
+              this.draggedRuleIndex = index;
+            },
+
+            handleRuleDrop(targetIndex) {
+              if (this.draggedRuleIndex === null) return;
+              this.moveRule(this.draggedRuleIndex, targetIndex);
+              this.draggedRuleIndex = null;
+            },
+
+            clearRuleDrag() {
+              this.draggedRuleIndex = null;
             },
             
             clearAll() {

@@ -52,21 +52,18 @@ export function generateRules(selectedRules = [], customRules = []) {
 		}
 	});
 
-	customRules.reverse();
-	customRules.forEach((rule) => {
-		rules.unshift({
-			site_rules: toStringArray(rule.site),
-			ip_rules: toStringArray(rule.ip),
-			domain_suffix: toStringArray(rule.domain_suffix),
-			domain_keyword: toStringArray(rule.domain_keyword),
-			ip_cidr: toStringArray(rule.ip_cidr),
-			src_ip_cidr: toStringArray(rule.src_ip_cidr),
-			protocol: toStringArray(rule.protocol),
-			outbound: rule.name
-		});
-	});
+	const prioritizedCustomRules = (customRules || []).map((rule) => ({
+		site_rules: toStringArray(rule.site),
+		ip_rules: toStringArray(rule.ip),
+		domain_suffix: toStringArray(rule.domain_suffix),
+		domain_keyword: toStringArray(rule.domain_keyword),
+		ip_cidr: toStringArray(rule.ip_cidr),
+		src_ip_cidr: toStringArray(rule.src_ip_cidr),
+		protocol: toStringArray(rule.protocol),
+		outbound: rule.name
+	}));
 
-	return rules;
+	return [...prioritizedCustomRules, ...rules];
 }
 
 export function generateRuleSets(selectedRules = [], customRules = []) {

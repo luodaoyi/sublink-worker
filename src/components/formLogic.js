@@ -82,6 +82,7 @@ export const formLogicFn = (t) => {
             },
             selectedRules: [],
             selectedPredefinedRule: 'balanced',
+            draggedSelectedRuleIndex: null,
             subconverterCopied: false,
             groupByCountry: false,
             includeAutoSelect: true,
@@ -191,6 +192,33 @@ export const formLogicFn = (t) => {
                 if (rules && rules[this.selectedPredefinedRule]) {
                     this.selectedRules = rules[this.selectedPredefinedRule];
                 }
+            },
+
+            moveSelectedRule(fromIndex, toIndex) {
+                if (!Array.isArray(this.selectedRules)) return;
+                if (fromIndex === toIndex) return;
+                if (fromIndex < 0 || toIndex < 0) return;
+                if (fromIndex >= this.selectedRules.length || toIndex >= this.selectedRules.length) return;
+
+                const reorderedRules = [...this.selectedRules];
+                const [movedRule] = reorderedRules.splice(fromIndex, 1);
+                reorderedRules.splice(toIndex, 0, movedRule);
+                this.selectedRules = reorderedRules;
+                this.selectedPredefinedRule = 'custom';
+            },
+
+            startSelectedRuleDrag(index) {
+                this.draggedSelectedRuleIndex = index;
+            },
+
+            handleSelectedRuleDrop(targetIndex) {
+                if (this.draggedSelectedRuleIndex === null) return;
+                this.moveSelectedRule(this.draggedSelectedRuleIndex, targetIndex);
+                this.draggedSelectedRuleIndex = null;
+            },
+
+            clearSelectedRuleDrag() {
+                this.draggedSelectedRuleIndex = null;
             },
 
             getSubconverterUrl() {

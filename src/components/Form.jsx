@@ -155,6 +155,33 @@ export const Form = (props) => {
     ))}
   </div>
 
+  <div x-show="selectedRules.length > 0" class="mt-6 space-y-3">
+    <div class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+      <i class="fas fa-arrow-down-wide-short text-gray-400"></i>
+      <span>{t('priorityOrder')}</span>
+    </div>
+    <div class="space-y-2">
+      <template x-for="(ruleName, index) in selectedRules" x-bind:key="ruleName">
+        <div
+          draggable="true"
+          x-on:dragstart="startSelectedRuleDrag(index)"
+          x-on:dragend="clearSelectedRuleDrag()"
+          class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30 cursor-move"
+          {...{
+            'x-on:dragover.prevent': '',
+            'x-on:drop.prevent': 'handleSelectedRuleDrop(index)'
+          }}
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="w-6 h-6 rounded bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs font-semibold" x-text="index + 1"></span>
+            <i class="fas fa-grip-vertical text-gray-400"></i>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate" x-text="window.APP_TRANSLATIONS?.outboundNames?.[ruleName] || ruleName"></span>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+
           </div>
 
   {/* Custom Rules Component */ }
