@@ -54,19 +54,59 @@ export function getCustomRuleDisplayItem(rule = {}, index = 0, customRuleLabel =
 export function buildPriorityPreviewItems({
   selectedRules = [],
   customRules = [],
+  priorityOrder = [],
   ruleDisplayMap = {},
   customRuleLabel = 'Custom Rule'
 } = {}) {
-  const customItems = customRules.map((rule, index) =>
-    getCustomRuleDisplayItem(rule, index, customRuleLabel)
-  );
+  const customItems = customRules.map((rule, index) => ({
+    ...getCustomRuleDisplayItem(rule, index, customRuleLabel),
+    _priorityKey: `custom:${index}`
+  }));
 
   const selectedItems = selectedRules.map((ruleName) => ({
     type: 'predefined',
     name: ruleName,
     label: ruleDisplayMap[ruleName]?.label || ruleName,
-    iconClass: ruleDisplayMap[ruleName]?.iconClass || getRuleIconClass(ruleName)
+    iconClass: ruleDisplayMap[ruleName]?.iconClass || getRuleIconClass(ruleName),
+    _priorityKey: `predefined:${ruleName}`
   }));
 
-  return [...customItems, ...selectedItems];
+  const itemsByPriorityKey = [...customItems, ...selectedItems].reduce((acc, item) => {
+    acc[item._priorityKey] = item;
+    return acc;
+  }, {});
+
+  const normalizedPriorityOrder = Array.isArray(priorityOrder) ? priorityOrder : [];
+
+  if (normalizedPriorityOrder.length === 0) {
+    return [...customItems, ...selectedItems].map(({ _priorityKey, ...item }) => item);
+  }
+
+  const orderedItems = [];
+  const usedPriorityKeys = new Set();
+
+  normalizedPriorityOrder.forEach((entry) => {
+    if (!entry || typeof entry !== 'object') {
+      return;
+    }
+
+    const priorityKey = entry.type === 'custom'
+      ? `custom:${entry.index}`
+      : entry.type === 'predefined'
+        ? `predefined:${entry.name}`
+        : null;
+
+    if (!priorityKey || usedPriorityKeys.has(priorityKey) || !itemsByPriorityKey[priorityKey]) {
+      return;
+    }
+
+    usedPriorityKeys.add(priorityKey);
+    orderedItems.push(itemsByPriorityKey[priorityKey]);
+  });
+
+  const remainingItems = [...customItems, ...selectedItems].filter(
+    (item) => !usedPriorityKeys.has(item._priorityKey)
+  );
+
+  return [...orderedItems, ...remainingItems].map(({ _priorityKey, ...item }) => item);
 }

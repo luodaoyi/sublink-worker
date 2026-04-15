@@ -7,12 +7,26 @@ import { buildSelectorMembers as buildSelectorMemberList, buildNodeSelectMembers
 import { normalizeGroupName } from './helpers/groupNameUtils.js';
 
 export class SingboxConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, singboxVersion = '1.12', includeAutoSelect = true) {
+    constructor(inputString, selectedRules, customRules, priorityOrder, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, singboxVersion = '1.12', includeAutoSelect = true) {
+        if (!Array.isArray(priorityOrder) && (typeof baseConfig === 'string' || typeof baseConfig === 'undefined')) {
+            includeAutoSelect = singboxVersion ?? includeAutoSelect;
+            singboxVersion = externalUiDownloadUrl ?? singboxVersion;
+            externalUiDownloadUrl = externalController;
+            externalController = enableClashUI;
+            enableClashUI = groupByCountry;
+            groupByCountry = userAgent;
+            userAgent = lang;
+            lang = baseConfig;
+            baseConfig = priorityOrder;
+            priorityOrder = [];
+        }
+
         const resolvedBaseConfig = baseConfig ?? SING_BOX_CONFIG;
         super(inputString, resolvedBaseConfig, lang, userAgent, groupByCountry, includeAutoSelect);
 
         this.selectedRules = selectedRules;
         this.customRules = customRules;
+        this.priorityOrder = Array.isArray(priorityOrder) ? priorityOrder : [];
         this.countryGroupNames = [];
         this.manualGroupName = null;
         this.enableClashUI = enableClashUI;
@@ -448,7 +462,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
     }
 
     formatConfig() {
-        const rules = generateRules(this.selectedRules, this.customRules);
+        const rules = generateRules(this.selectedRules, this.customRules, this.priorityOrder);
         const { site_rule_sets, ip_rule_sets } = generateRuleSets(this.selectedRules, this.customRules);
 
         this.config.route.rule_set = [...site_rule_sets, ...ip_rule_sets];

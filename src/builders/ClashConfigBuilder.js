@@ -47,13 +47,26 @@ function getClashUdpValue(proxy, defaultEnabled = true) {
 }
 
 export class ClashConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, includeAutoSelect = true) {
+    constructor(inputString, selectedRules, customRules, priorityOrder, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, includeAutoSelect = true) {
+        if (!Array.isArray(priorityOrder) && (typeof baseConfig === 'string' || typeof baseConfig === 'undefined')) {
+            includeAutoSelect = externalUiDownloadUrl ?? includeAutoSelect;
+            externalUiDownloadUrl = externalController;
+            externalController = enableClashUI;
+            enableClashUI = groupByCountry;
+            groupByCountry = userAgent;
+            userAgent = lang;
+            lang = baseConfig;
+            baseConfig = priorityOrder;
+            priorityOrder = [];
+        }
+
         if (!baseConfig) {
             baseConfig = CLASH_CONFIG;
         }
         super(inputString, baseConfig, lang, userAgent, groupByCountry, includeAutoSelect);
         this.selectedRules = selectedRules;
         this.customRules = customRules;
+        this.priorityOrder = Array.isArray(priorityOrder) ? priorityOrder : [];
         this.countryGroupNames = [];
         this.manualGroupName = null;
         this.enableClashUI = enableClashUI;
@@ -632,7 +645,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
 
     // 生成规则
     generateRules() {
-        return generateRules(this.selectedRules, this.customRules);
+        return generateRules(this.selectedRules, this.customRules, this.priorityOrder);
     }
 
     formatConfig() {

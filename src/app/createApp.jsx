@@ -77,6 +77,7 @@ export function createApp(bindings = {}) {
 
             const selectedRules = parseSelectedRules(c.req.query('selectedRules'));
             const customRules = parseJsonArray(c.req.query('customRules'));
+            const priorityOrder = parseJsonArray(c.req.query('priorityOrder'));
             const ua = c.req.query('ua') || getRequestHeader(c.req, 'User-Agent') || DEFAULT_USER_AGENT;
             const groupByCountry = parseBooleanFlag(c.req.query('group_by_country'));
             const includeAutoSelect = c.req.query('include_auto_select') !== 'false';
@@ -103,6 +104,7 @@ export function createApp(bindings = {}) {
                 config,
                 selectedRules,
                 customRules,
+                priorityOrder,
                 baseConfig,
                 lang,
                 ua,
@@ -133,6 +135,7 @@ export function createApp(bindings = {}) {
 
             const selectedRules = parseSelectedRules(c.req.query('selectedRules'));
             const customRules = parseJsonArray(c.req.query('customRules'));
+            const priorityOrder = parseJsonArray(c.req.query('priorityOrder'));
             const ua = c.req.query('ua') || getRequestHeader(c.req, 'User-Agent') || DEFAULT_USER_AGENT;
             const groupByCountry = parseBooleanFlag(c.req.query('group_by_country'));
             const includeAutoSelect = c.req.query('include_auto_select') !== 'false';
@@ -152,6 +155,7 @@ export function createApp(bindings = {}) {
                 config,
                 selectedRules,
                 customRules,
+                priorityOrder,
                 baseConfig,
                 lang,
                 ua,
@@ -182,6 +186,7 @@ export function createApp(bindings = {}) {
 
             const selectedRules = parseSelectedRules(c.req.query('selectedRules'));
             const customRules = parseJsonArray(c.req.query('customRules'));
+            const priorityOrder = parseJsonArray(c.req.query('priorityOrder'));
             const ua = c.req.query('ua') || getRequestHeader(c.req, 'User-Agent') || DEFAULT_USER_AGENT;
             const groupByCountry = parseBooleanFlag(c.req.query('group_by_country'));
             const includeAutoSelect = c.req.query('include_auto_select') !== 'false';
@@ -198,6 +203,7 @@ export function createApp(bindings = {}) {
                 config,
                 selectedRules,
                 customRules,
+                priorityOrder,
                 baseConfig,
                 lang,
                 ua,
@@ -242,11 +248,13 @@ export function createApp(bindings = {}) {
             const includeAutoSelect = c.req.query('include_auto_select') !== 'false';
             const groupByCountry = parseBooleanFlag(c.req.query('group_by_country'));
             const customRules = parseJsonArray(c.req.query('customRules'));
+            const priorityOrder = parseJsonArray(c.req.query('priorityOrder'));
             const lang = c.get('lang');
 
             const config = generateSubconverterConfig({
                 selectedRules,
                 customRules,
+                priorityOrder,
                 lang,
                 includeAutoSelect,
                 groupByCountry

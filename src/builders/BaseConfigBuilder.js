@@ -9,6 +9,7 @@ export class BaseConfigBuilder {
         this.config = deepCopy(baseConfig);
         this.customRules = [];
         this.selectedRules = [];
+        this.priorityOrder = [];
         this.t = createTranslator(lang);
         this.userAgent = userAgent;
         this.appliedOverrideKeys = new Set();
@@ -360,7 +361,7 @@ export class BaseConfigBuilder {
     }
 
     generateRules() {
-        return generateRules(this.selectedRules, this.customRules);
+        return generateRules(this.selectedRules, this.customRules, this.priorityOrder);
     }
 
     formatConfig() {

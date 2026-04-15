@@ -245,18 +245,48 @@ export const formLogicFn = (t) => {
                         type: 'custom',
                         name: trimmedName,
                         label: trimmedName || `${customRuleLabel} ${index + 1}`,
-                        iconClass: 'fas fa-wand-magic-sparkles'
+                        iconClass: 'fas fa-wand-magic-sparkles',
+                        _priorityKey: `custom:${index}`
                     };
                 });
-                const selectedItems = (Array.isArray(this.selectedRules) ? this.selectedRules : []).map((ruleName, selectedIndex) => ({
+                const selectedItems = (Array.isArray(this.selectedRules) ? this.selectedRules : []).map((ruleName) => ({
                     type: 'predefined',
                     name: ruleName,
                     label: ruleDisplayMap[ruleName]?.label || ruleName,
                     iconClass: ruleDisplayMap[ruleName]?.iconClass || 'fas fa-shuffle',
-                    selectedIndex
+                    _priorityKey: `predefined:${ruleName}`
                 }));
+                const itemsByPriorityKey = [...customItems, ...selectedItems].reduce((acc, item) => {
+                    acc[item._priorityKey] = item;
+                    return acc;
+                }, {});
+                const orderedItems = [];
+                const usedPriorityKeys = new Set();
 
-                return [...customItems, ...selectedItems];
+                (Array.isArray(this.priorityOrder) ? this.priorityOrder : []).forEach((entry) => {
+                    if (!entry || typeof entry !== 'object') {
+                        return;
+                    }
+
+                    const priorityKey = entry.type === 'custom'
+                        ? `custom:${entry.index}`
+                        : entry.type === 'predefined'
+                            ? `predefined:${entry.name}`
+                            : null;
+
+                    if (!priorityKey || usedPriorityKeys.has(priorityKey) || !itemsByPriorityKey[priorityKey]) {
+                        return;
+                    }
+
+                    usedPriorityKeys.add(priorityKey);
+                    orderedItems.push(itemsByPriorityKey[priorityKey]);
+                });
+
+                const remainingItems = [...customItems, ...selectedItems].filter(
+                    (item) => !usedPriorityKeys.has(item._priorityKey)
+                );
+
+                return [...orderedItems, ...remainingItems].map(({ _priorityKey, ...item }) => item);
             },
 
             getSubconverterUrl() {
@@ -278,6 +308,10 @@ export const formLogicFn = (t) => {
                         params.append('customRules', JSON.stringify(customRules));
                     }
                 } catch { }
+
+                if (Array.isArray(this.priorityOrder) && this.priorityOrder.length > 0) {
+                    params.append('priorityOrder', JSON.stringify(this.priorityOrder));
+                }
 
                 if (!this.includeAutoSelect) {
                     params.append('include_auto_select', 'false');
@@ -443,6 +477,7 @@ export const formLogicFn = (t) => {
                     params.append('ua', this.customUA);
                     params.append('selectedRules', JSON.stringify(this.selectedRules));
                     params.append('customRules', JSON.stringify(customRules));
+                    if (Array.isArray(this.priorityOrder) && this.priorityOrder.length > 0) params.append('priorityOrder', JSON.stringify(this.priorityOrder));
 
                     if (this.groupByCountry) params.append('group_by_country', 'true');
                     if (!this.includeAutoSelect) params.append('include_auto_select', 'false');
@@ -685,6 +720,18 @@ export const formLogicFn = (t) => {
                     }
                 }
 
+                const priorityOrder = params.get('priorityOrder');
+                if (priorityOrder) {
+                    try {
+                        const parsed = JSON.parse(priorityOrder);
+                        if (Array.isArray(parsed)) {
+                            this.priorityOrder = parsed;
+                        }
+                    } catch (e) {
+                        console.warn('Failed to parse priorityOrder:', e);
+                    }
+                }
+
                 // Extract other parameters
                 this.groupByCountry = params.get('group_by_country') === 'true';
                 this.includeAutoSelect = params.get('include_auto_select') !== 'false';
@@ -712,7 +759,7 @@ export const formLogicFn = (t) => {
                 }
 
                 // Expand advanced options if any advanced settings are present
-                if (selectedRules || customRules || this.groupByCountry || this.enableClashUI ||
+                if (selectedRules || customRules || priorityOrder || this.groupByCountry || this.enableClashUI ||
                     externalController || externalUiDownloadUrl || ua || configId) {
                     this.showAdvanced = true;
                 }

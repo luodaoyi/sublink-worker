@@ -104,6 +104,29 @@ describe('GET /subconverter', () => {
         expect(text).toContain('ruleset=LAN,[]SRC-IP-CIDR,192.168.1.13/32');
     });
 
+    it('applies fully custom mixed priority order across predefined and custom rules', async () => {
+        const app = createTestApp();
+        const selectedRules = JSON.stringify(['Google', 'Telegram']);
+        const customRules = JSON.stringify([
+            { name: 'Work', domain_suffix: 'corp.example' },
+            { name: 'Home', domain_suffix: 'home.example' }
+        ]);
+        const priorityOrder = JSON.stringify([
+            { type: 'predefined', name: 'Google' },
+            { type: 'custom', index: 1 },
+            { type: 'predefined', name: 'Telegram' },
+            { type: 'custom', index: 0 }
+        ]);
+        const res = await app.request(
+            `http://localhost/subconverter?selectedRules=${encodeURIComponent(selectedRules)}&customRules=${encodeURIComponent(customRules)}&priorityOrder=${encodeURIComponent(priorityOrder)}`
+        );
+        const text = await res.text();
+
+        expect(text.indexOf('ruleset=谷歌服务,[]GEOSITE,google')).toBeLessThan(text.indexOf('ruleset=Home,[]DOMAIN-SUFFIX,home.example'));
+        expect(text.indexOf('ruleset=Home,[]DOMAIN-SUFFIX,home.example')).toBeLessThan(text.indexOf('ruleset=电报消息,[]GEOIP,telegram'));
+        expect(text.indexOf('ruleset=电报消息,[]GEOIP,telegram')).toBeLessThan(text.indexOf('ruleset=Work,[]DOMAIN-SUFFIX,corp.example'));
+    });
+
     it('generates correct proxy group structure', async () => {
         const app = createTestApp();
         const res = await app.request('http://localhost/subconverter?selectedRules=minimal');

@@ -176,14 +176,14 @@ export const Form = (props) => {
     <div class="space-y-2">
       <template x-for="(rule, index) in getPriorityPreviewItems()" x-bind:key="`${rule.type}-${rule.name || 'unnamed'}-${index}`">
         <div
-          x-bind:draggable="rule.type === 'predefined'"
-          x-on:dragstart="rule.type === 'predefined' ? startSelectedRuleDrag(rule.selectedIndex) : null"
-          x-on:dragend="clearSelectedRuleDrag()"
+          draggable="true"
+          x-on:dragstart="startPriorityDrag(index)"
+          x-on:dragend="clearPriorityDrag()"
           class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30"
-          x-bind:class="rule.type === 'predefined' ? 'cursor-move' : 'cursor-default'"
+          x-bind:class="'cursor-move'"
           {...{
             'x-on:dragover.prevent': '',
-            'x-on:drop.prevent': 'rule.type === \'predefined\' ? handleSelectedRuleDrop(rule.selectedIndex) : null'
+            'x-on:drop.prevent': 'handlePriorityDrop(index)'
           }}
         >
           <div class="flex items-center gap-3 min-w-0">
@@ -194,7 +194,7 @@ export const Form = (props) => {
             <span class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate" x-text="rule.label"></span>
           </div>
           <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-            <i x-bind:class="rule.type === 'predefined' ? 'fas fa-grip-vertical' : 'fas fa-thumbtack'"></i>
+            <i class="fas fa-grip-vertical"></i>
           </div>
         </div>
       </template>

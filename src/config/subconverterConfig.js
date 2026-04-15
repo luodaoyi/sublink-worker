@@ -35,31 +35,33 @@ function buildCountryGroupRefs(countryGroupNames) {
  * @param {string} options.lang - Language for group name translation
  * @param {boolean} options.includeAutoSelect - Whether to include auto select group
  * @param {boolean} options.groupByCountry - Whether to group proxies by country
+ * @param {Array} options.priorityOrder - Mixed priority ordering across predefined and custom rules
  * @returns {string} INI format config string
  */
-export function generateSubconverterConfig({ selectedRules = [], customRules = [], lang = 'zh-CN', includeAutoSelect = true, groupByCountry = false } = {}) {
+export function generateSubconverterConfig({ selectedRules = [], customRules = [], priorityOrder = [], lang = 'zh-CN', includeAutoSelect = true, groupByCountry = false } = {}) {
 	const t = createTranslator(lang);
-	const rules = generateRules(selectedRules, customRules);
+	const rules = generateRules(selectedRules, customRules, priorityOrder);
+	const getGroupName = (outbound) => {
+		const translated = t(`outboundNames.${outbound}`);
+		if (translated === `outboundNames.${outbound}`) {
+			return outbound;
+		}
+		return translated.replace(/^[^\p{L}\p{N}]+\s*/u, '');
+	};
 
 	const lines = ['[custom]'];
 
 	// --- Ruleset lines ---
-	// Domain-type rules first, then IP-type rules (reduces DNS leaks, same as SurgeConfigBuilder)
-
-	// Source-IP rules first (highest priority, no DNS needed)
+	// Preserve user-defined priority order across predefined and custom rules.
+	// Within each rule, emit source-ip first, then domain-type rules, then ip-type rules.
 	rules.forEach(rule => {
-		const groupName = t(`outboundNames.${rule.outbound}`);
+		const groupName = getGroupName(rule.outbound);
 
 		if (rule.src_ip_cidr) {
 			rule.src_ip_cidr.forEach(cidr => {
 				if (cidr) lines.push(`ruleset=${groupName},[]SRC-IP-CIDR,${cidr}`);
 			});
 		}
-	});
-
-	// First pass: domain-type rules (DOMAIN-SUFFIX, DOMAIN-KEYWORD, GEOSITE)
-	rules.forEach(rule => {
-		const groupName = t(`outboundNames.${rule.outbound}`);
 
 		if (rule.domain_suffix) {
 			rule.domain_suffix.forEach(suffix => {
@@ -76,11 +78,6 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 				if (site) lines.push(`ruleset=${groupName},[]GEOSITE,${site}`);
 			});
 		}
-	});
-
-	// Second pass: IP-type rules (GEOIP, IP-CIDR)
-	rules.forEach(rule => {
-		const groupName = t(`outboundNames.${rule.outbound}`);
 
 		if (rule.ip_rules) {
 			rule.ip_rules.forEach(ip => {
@@ -160,7 +157,7 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 	}
 
 	rules.forEach(rule => {
-		const groupName = t(`outboundNames.${rule.outbound}`);
+		const groupName = getGroupName(rule.outbound);
 		if (processedGroups.has(groupName)) return;
 		processedGroups.add(groupName);
 

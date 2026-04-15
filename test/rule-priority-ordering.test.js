@@ -85,6 +85,73 @@ describe('rule priority ordering', () => {
     ]);
   });
 
+  it('supports fully custom mixed priority order across predefined and custom rules', () => {
+    const displayMap = {
+      Google: { label: '谷歌', iconClass: 'fas fa-globe' },
+      Telegram: { label: '电报', iconClass: 'fab fa-telegram' }
+    };
+
+    const items = buildPriorityPreviewItems({
+      selectedRules: ['Google', 'Telegram'],
+      customRules: [
+        { name: 'Work', domain_suffix: 'corp.example' },
+        { name: 'Home', domain_suffix: 'home.example' }
+      ],
+      priorityOrder: [
+        { type: 'predefined', name: 'Google' },
+        { type: 'custom', index: 1 },
+        { type: 'predefined', name: 'Telegram' },
+        { type: 'custom', index: 0 }
+      ],
+      ruleDisplayMap: displayMap,
+      customRuleLabel: '自定义规则'
+    });
+
+    expect(items).toEqual([
+      { type: 'predefined', name: 'Google', label: '谷歌', iconClass: 'fas fa-globe' },
+      { type: 'custom', name: 'Home', label: 'Home', iconClass: 'fas fa-wand-magic-sparkles' },
+      { type: 'predefined', name: 'Telegram', label: '电报', iconClass: 'fab fa-telegram' },
+      { type: 'custom', name: 'Work', label: 'Work', iconClass: 'fas fa-wand-magic-sparkles' }
+    ]);
+  });
+
+  it('uses the shared mixed priority order in form logic preview output', () => {
+    const fakeWindow = {
+      APP_TRANSLATIONS: {},
+      CUSTOM_RULE_LABEL: '自定义规则',
+      RULE_DISPLAY_MAP: {
+        Google: { label: '谷歌', iconClass: 'fas fa-globe' },
+        Telegram: { label: '电报', iconClass: 'fab fa-telegram' }
+      },
+      PREDEFINED_RULE_SETS: {},
+      location: { origin: 'https://example.com', search: '', href: 'https://example.com/' },
+      history: { replaceState() {} }
+    };
+
+    const fn = new Function('window', '(' + formLogicFn.toString() + ')(); return window;');
+    const result = fn(fakeWindow);
+    const data = result.formData();
+
+    data.selectedRules = ['Google', 'Telegram'];
+    data.customPriorityRules = [
+      { name: 'Work', domain_suffix: 'corp.example' },
+      { name: 'Home', domain_suffix: 'home.example' }
+    ];
+    data.priorityOrder = [
+      { type: 'predefined', name: 'Google' },
+      { type: 'custom', index: 1 },
+      { type: 'predefined', name: 'Telegram' },
+      { type: 'custom', index: 0 }
+    ];
+
+    expect(data.getPriorityPreviewItems()).toEqual([
+      { type: 'predefined', name: 'Google', label: '谷歌', iconClass: 'fas fa-globe' },
+      { type: 'custom', name: 'Home', label: 'Home', iconClass: 'fas fa-wand-magic-sparkles' },
+      { type: 'predefined', name: 'Telegram', label: '电报', iconClass: 'fab fa-telegram' },
+      { type: 'custom', name: 'Work', label: 'Work', iconClass: 'fas fa-wand-magic-sparkles' }
+    ]);
+  });
+
   it('creates a stable fallback label for unnamed custom rules', () => {
     expect(getCustomRuleDisplayItem({ name: '  ' }, 2, '自定义规则')).toEqual({
       type: 'custom',

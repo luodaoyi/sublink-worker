@@ -18,6 +18,48 @@ function toStringArray(value) {
 	return [];
 }
 
+function buildPriorityKey(entry) {
+	if (!entry || typeof entry !== 'object') {
+		return null;
+	}
+
+	if (entry.type === 'custom' && Number.isInteger(entry.index)) {
+		return `custom:${entry.index}`;
+	}
+
+	if (entry.type === 'predefined' && typeof entry.name === 'string' && entry.name.trim()) {
+		return `predefined:${entry.name.trim()}`;
+	}
+
+	return null;
+}
+
+function orderRulesByPriority(defaultItems, priorityOrder = []) {
+	if (!Array.isArray(priorityOrder) || priorityOrder.length === 0) {
+		return defaultItems;
+	}
+
+	const itemsByPriorityKey = defaultItems.reduce((acc, item) => {
+		acc[item._priorityKey] = item;
+		return acc;
+	}, {});
+	const orderedItems = [];
+	const usedPriorityKeys = new Set();
+
+	priorityOrder.forEach((entry) => {
+		const priorityKey = buildPriorityKey(entry);
+		if (!priorityKey || usedPriorityKeys.has(priorityKey) || !itemsByPriorityKey[priorityKey]) {
+			return;
+		}
+
+		usedPriorityKeys.add(priorityKey);
+		orderedItems.push(itemsByPriorityKey[priorityKey]);
+	});
+
+	const remainingItems = defaultItems.filter((item) => !usedPriorityKeys.has(item._priorityKey));
+	return [...orderedItems, ...remainingItems];
+}
+
 // Helper function to get outbounds based on selected rule names
 export function getOutbounds(selectedRuleNames) {
 	if (!selectedRuleNames || !Array.isArray(selectedRuleNames)) {
@@ -29,7 +71,7 @@ export function getOutbounds(selectedRuleNames) {
 }
 
 // Helper function to generate rules based on selected rule names
-export function generateRules(selectedRules = [], customRules = []) {
+export function generateRules(selectedRules = [], customRules = [], priorityOrder = []) {
 	if (typeof selectedRules === 'string' && PREDEFINED_RULE_SETS[selectedRules]) {
 		selectedRules = PREDEFINED_RULE_SETS[selectedRules];
 	}
@@ -47,12 +89,13 @@ export function generateRules(selectedRules = [], customRules = []) {
 				ip_rules: rule.ip_rules,
 				domain_suffix: rule?.domain_suffix,
 				ip_cidr: rule?.ip_cidr,
-				outbound: rule.name
+				outbound: rule.name,
+				_priorityKey: `predefined:${rule.name}`
 			});
 		}
 	});
 
-	const prioritizedCustomRules = (customRules || []).map((rule) => ({
+	const prioritizedCustomRules = (customRules || []).map((rule, index) => ({
 		site_rules: toStringArray(rule.site),
 		ip_rules: toStringArray(rule.ip),
 		domain_suffix: toStringArray(rule.domain_suffix),
@@ -60,10 +103,12 @@ export function generateRules(selectedRules = [], customRules = []) {
 		ip_cidr: toStringArray(rule.ip_cidr),
 		src_ip_cidr: toStringArray(rule.src_ip_cidr),
 		protocol: toStringArray(rule.protocol),
-		outbound: rule.name
+		outbound: rule.name,
+		_priorityKey: `custom:${index}`
 	}));
 
-	return [...prioritizedCustomRules, ...rules];
+	return orderRulesByPriority([...prioritizedCustomRules, ...rules], priorityOrder)
+		.map(({ _priorityKey, ...rule }) => rule);
 }
 
 export function generateRuleSets(selectedRules = [], customRules = []) {
