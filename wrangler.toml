@@ -5,12 +5,8 @@ compatibility_date = "2024-07-24"
 compatibility_flags = ["nodejs_compat"]
 
 kv_namespaces = [
-  { binding = "SUBLINK_KV", id = "ccf4e57e1be74ee680e862329b26b390" }
+  { binding = "SUBLINK_KV", id = "8943789ed0af49659f887fc740d11240" }
 ]
 
 [assets]
 directory = "./public"
-
-[vars]
-GITHUB_ALLOWED_USERS = "luodaoyi"
-AUTH_ORIGIN = "https://sub.011f.com"

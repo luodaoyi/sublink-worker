@@ -160,17 +160,6 @@ export const Form = (props) => {
   {/* Custom Rules Component */ }
   <CustomRules t={t} />
 
-  <div class="flex justify-end">
-    <button
-      type="button"
-      x-on:click="saveRuleConfig()"
-      class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-200 font-medium flex items-center gap-2"
-    >
-      <i class="fas fa-save"></i>
-      <span>保存规则档案</span>
-    </button>
-  </div>
-
     {/* General Options */ }
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">

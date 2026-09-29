@@ -31,10 +31,6 @@ export class MemoryKVAdapter {
         this.clearExpiration(key);
     }
 
-    async list(prefix = '') {
-        return Array.from(this.store.keys()).filter((key) => key.startsWith(prefix));
-    }
-
     scheduleExpiration(key, ttlSeconds) {
         this.clearExpiration(key);
         const expireAt = Date.now() + ttlSeconds * 1000;

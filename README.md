@@ -67,20 +67,6 @@ Sing-Box • Clash • Xray/V2Ray • Surge
 - Multi-language support (Chinese, English, Persian, Russian)
 - Web interface with predefined rule sets and customizable policy groups
 
-### GitHub OAuth 管理后台
-
-设置以下环境变量后，访问 `/admin` 使用 GitHub 登录。只有 `GITHUB_ALLOWED_USERS` 中的 GitHub 登录名可以进入后台：
-
-```text
-GITHUB_CLIENT_ID=...
-GITHUB_CLIENT_SECRET=...
-GITHUB_ALLOWED_USERS=your-github-login
-AUTH_COOKIE_SECRET=随机长字符串
-AUTH_ORIGIN=https://your-worker.example.com
-```
-
-GitHub OAuth 应用的回调地址必须是 `${AUTH_ORIGIN}/auth/github/callback`。后台保存的规则档案会生成 `rules_*` ID，订阅地址增加 `ruleConfigId=rules_*` 后即可复用该档案；订阅读取规则档案仍然公开，配置的新增、修改和删除需要 OAuth 会话。
-
 ## 🤝 Contributing
 
 Issues and Pull Requests are welcome to improve this project.
