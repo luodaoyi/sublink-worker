@@ -32,6 +32,17 @@ export class RedisKVAdapter {
         await this.client.del(this.formatKey(key));
     }
 
+    async list(prefix = '') {
+        const keys = [];
+        let cursor = '0';
+        do {
+            const result = await this.client.scan(cursor, 'MATCH', this.formatKey(prefix) + '*', 'COUNT', 500);
+            cursor = String(result[0]);
+            keys.push(...result[1].map((key) => key.slice(this.prefix.length)));
+        } while (cursor !== '0');
+        return keys;
+    }
+
     async disconnect() {
         if (this.manageConnection && this.client) {
             await this.client.quit();

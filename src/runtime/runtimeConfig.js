@@ -3,6 +3,7 @@
  * @property {(key: string) => Promise<string | null>} get
  * @property {(key: string, value: string, options?: { expirationTtl?: number }) => Promise<void>} put
  * @property {(key: string) => Promise<void>} delete
+ * @property {(prefix?: string) => Promise<string[]>} [list]
  */
 
 /**
@@ -13,6 +14,11 @@
  * @typedef {Object} RuntimeConfig
  * @property {number} [configTtlSeconds]
  * @property {number} [shortLinkTtlSeconds]
+ * @property {string} [githubClientId]
+ * @property {string} [githubClientSecret]
+ * @property {string[]} [githubAllowedUsers]
+ * @property {string} [authCookieSecret]
+ * @property {string} [authOrigin]
  */
 
 /**
@@ -40,7 +46,12 @@ export function normalizeRuntime(runtime = {}) {
         logger: runtime.logger ?? console,
         config: {
             configTtlSeconds: runtime.config?.configTtlSeconds ?? DEFAULTS.configTtlSeconds,
-            shortLinkTtlSeconds: runtime.config?.shortLinkTtlSeconds ?? null
+            shortLinkTtlSeconds: runtime.config?.shortLinkTtlSeconds ?? null,
+            githubClientId: runtime.config?.githubClientId ?? '',
+            githubClientSecret: runtime.config?.githubClientSecret ?? '',
+            githubAllowedUsers: runtime.config?.githubAllowedUsers ?? [],
+            authCookieSecret: runtime.config?.authCookieSecret ?? '',
+            authOrigin: runtime.config?.authOrigin ?? ''
         }
     };
 }

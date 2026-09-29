@@ -11,9 +11,18 @@ export function createVercelRuntime(env = process.env) {
         logger: console,
         config: {
             configTtlSeconds: undefined,
-            shortLinkTtlSeconds: null
+            shortLinkTtlSeconds: null,
+            githubClientId: env.GITHUB_CLIENT_ID || '',
+            githubClientSecret: env.GITHUB_CLIENT_SECRET || '',
+            githubAllowedUsers: parseAllowedUsers(env.GITHUB_ALLOWED_USERS),
+            authCookieSecret: env.AUTH_COOKIE_SECRET || '',
+            authOrigin: env.AUTH_ORIGIN || ''
         }
     };
+}
+
+function parseAllowedUsers(value) {
+    return String(value || '').split(',').map((item) => item.trim().toLowerCase()).filter(Boolean);
 }
 
 function resolveKv(env) {

@@ -14,4 +14,9 @@ export class CloudflareKVAdapter {
     async delete(key) {
         return this.binding.delete(key);
     }
+
+    async list(prefix = '') {
+        const result = await this.binding.list({ prefix });
+        return (result.keys || []).map((entry) => entry.name);
+    }
 }

@@ -24,6 +24,17 @@ export class UpstashKVAdapter {
         await this.execute(['DEL', key]);
     }
 
+    async list(prefix = '') {
+        const keys = [];
+        let cursor = '0';
+        do {
+            const result = await this.execute(['SCAN', cursor, 'MATCH', `${prefix}*`, 'COUNT', '500']);
+            cursor = String(result?.[0] ?? '0');
+            keys.push(...(result?.[1] || []));
+        } while (cursor !== '0');
+        return keys;
+    }
+
     async execute(command) {
         const response = await fetch(this.url, {
             method: 'POST',

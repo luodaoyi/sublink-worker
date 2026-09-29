@@ -10,3 +10,7 @@ kv_namespaces = [
 
 [assets]
 directory = "./public"
+
+[vars]
+GITHUB_ALLOWED_USERS = "luodaoyi"
+AUTH_ORIGIN = "https://sub.011f.com"

@@ -92,6 +92,7 @@ export const formLogicFn = (t) => {
             configEditor: '',
             savingConfig: false,
             currentConfigId: '',
+            ruleConfigId: '',
             saveConfigText: '',
             savingConfigText: '',
             configContentRequiredText: '',
@@ -141,6 +142,7 @@ export const formLogicFn = (t) => {
                 this.customShortCode = localStorage.getItem('customShortCode') || '';
                 const initialUrlParams = new URLSearchParams(window.location.search);
                 this.currentConfigId = initialUrlParams.get('configId') || '';
+                this.ruleConfigId = initialUrlParams.get('ruleConfigId') || '';
 
                 // Load accordion states
                 const savedAccordion = localStorage.getItem('accordionSections');
@@ -212,6 +214,10 @@ export const formLogicFn = (t) => {
                         params.append('customRules', JSON.stringify(customRules));
                     }
                 } catch { }
+
+                if (this.ruleConfigId) {
+                    params.append('ruleConfigId', this.ruleConfigId);
+                }
 
                 if (!this.includeAutoSelect) {
                     params.append('include_auto_select', 'false');
@@ -297,6 +303,28 @@ export const formLogicFn = (t) => {
                 }
             },
 
+            async saveRuleConfig() {
+                try {
+                    const input = document.querySelector('input[name="customRules"]');
+                    const customRules = input?.value ? JSON.parse(input.value) : [];
+                    const response = await fetch('/admin/api/configs', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ type: 'rules', content: { selectedRules: this.selectedRules, customRules } })
+                    });
+                    const payload = await response.json().catch(() => ({}));
+                    const id = String(payload.id || '').trim();
+                    if (!response.ok || !id.startsWith('rules_')) throw new Error(payload.error || response.statusText);
+                    this.ruleConfigId = id;
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('ruleConfigId', id);
+                    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+                    alert('规则档案已保存：' + id);
+                } catch (error) {
+                    alert('规则档案保存失败：' + (error?.message || 'Unknown error'));
+                }
+            },
+
             validateBaseConfig() {
                 const content = (this.configEditor || '').trim();
                 if (!content) {
@@ -377,6 +405,7 @@ export const formLogicFn = (t) => {
                     params.append('ua', this.customUA);
                     params.append('selectedRules', JSON.stringify(this.selectedRules));
                     params.append('customRules', JSON.stringify(customRules));
+                    if (this.ruleConfigId) params.append('ruleConfigId', this.ruleConfigId);
 
                     if (this.groupByCountry) params.append('group_by_country', 'true');
                     if (!this.includeAutoSelect) params.append('include_auto_select', 'false');
@@ -644,6 +673,9 @@ export const formLogicFn = (t) => {
                     this.currentConfigId = configId;
                     this.updateConfigIdInUrl(configId);
                 }
+
+                const ruleConfigId = params.get('ruleConfigId');
+                if (ruleConfigId) this.ruleConfigId = ruleConfigId;
 
                 // Expand advanced options if any advanced settings are present
                 if (selectedRules || customRules || this.groupByCountry || this.enableClashUI ||
